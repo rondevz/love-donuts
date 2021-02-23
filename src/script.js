@@ -4,15 +4,74 @@ import * as dat from "dat.gui";
 import gsap from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-const parameters = {
-	color: 0x14932b,
-	spin: () => {
-		gsap.to(mesh.rotation, {
-			duration: 1,
-			y: mesh.rotation.y + Math.PI * 2,
-		});
-	},
-};
+/**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader();
+const matcapTexture = textureLoader.load("/textures/matcaps/8.png");
+
+/**
+ * Fonts
+ */
+const fontLoader = new THREE.FontLoader();
+
+fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
+	//Text
+
+	const textGeometry = new THREE.TextGeometry("Love Donuts.", {
+		font: font,
+		size: 0.5,
+		height: 0.2,
+		curveSegments: 12,
+		bevelEnabled: true,
+		bevelThickness: 0.03,
+		bevelSize: 0.02,
+		bevelOffset: 0,
+		bevelSegments: 5,
+	});
+
+	const textRonaldGeometry = new THREE.TextGeometry(
+		"Made by Ronald Pereira.",
+		{
+			font: font,
+			size: 0.1,
+			height: 0.2,
+			curveSegments: 12,
+			bevelEnabled: true,
+			bevelThickness: 0.01,
+			bevelSize: 0.01,
+			bevelOffset: 0,
+			bevelSegments: 5,
+		}
+	);
+
+	textGeometry.center();
+	textRonaldGeometry.translate(0.5, -0.5, 0);
+
+	const material = new THREE.MeshMatcapMaterial({
+		matcap: matcapTexture,
+	});
+	const text = new THREE.Mesh(textGeometry, material);
+	const textRonald = new THREE.Mesh(textRonaldGeometry, material);
+
+	scene.add(text, textRonald);
+
+	//Donuts
+
+	const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45);
+
+	for (let i = 0; i < 100; i++) {
+		const donut = new THREE.Mesh(donutGeometry, material);
+		donut.position.x = (Math.random() - 0.5) * 10;
+		donut.position.y = (Math.random() - 0.5) * 10;
+		donut.position.z = (Math.random() - 0.5) * 10;
+		donut.rotation.x = Math.random() * Math.PI;
+		donut.rotation.y = Math.random() * Math.PI;
+		const scale = Math.random();
+		donut.scale.set(scale, scale, scale);
+		scene.add(donut);
+	}
+});
 
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
@@ -20,57 +79,7 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
-/**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-
-const doorColorTexture = textureLoader.load('/textures/door/color.jpg')
-const doorAlphaTexture = textureLoader.load('/textures/door/alpha.jpg')
-const doorAmbientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg')
-const doorHeightTexture = textureLoader.load('/textures/door/height.jpg')
-const doorNormalTexture = textureLoader.load('/textures/door/normal.jpg')
-const doorMetalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
-const doorRoughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
-const matcapTexture = textureLoader.load('/textures/matcaps/5.png')
-const gradientTexture = textureLoader.load('/textures/gradients/3.jpg')
-
 // Objects
-
-const material = new THREE.MeshStandardMaterial()
-
-material.map = doorColorTexture
-material.displacementMap = doorHeightTexture
-material.metalnessMap = doorMetalnessTexture
-material.roughnessMap = doorRoughnessTexture
-material.normalMap = doorNormalTexture
-material.alphaMap = doorAlphaTexture
-
-material.side = THREE.DoubleSide;
-material.displacementScale = 0.05
-material.normalScale.set(0.5, 0.5)
-material.transparent = true
-
-const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64), material);
-
-const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 100, 100), material);
-
-const torus = new THREE.Mesh(
-	new THREE.TorusGeometry(0.3, 0.2, 64, 128),
-	material
-);
-
-sphere.position.x = -1.5;
-torus.position.x = 1.5;
-
-sphere.geometry.setAttribute('uv2', new THREE.BufferAttribute(sphere.geometry.attributes.uv.array, 2))
-plane.geometry.setAttribute('uv2', new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2))
-torus.geometry.setAttribute('uv2', new THREE.BufferAttribute(torus.geometry.attributes.uv.array, 2))
-
-material.aoMap = doorAmbientOcclusionTexture
-material.aoMapIntensity = 1
-
-scene.add(sphere, plane, torus);
 
 // Sizes
 const sizes = {
@@ -86,7 +95,7 @@ const camera = new THREE.PerspectiveCamera(
 	1000
 );
 
-camera.position.z = 3;
+camera.position.z = 8;
 camera.lookAt(scene.position);
 scene.add(camera);
 
@@ -99,11 +108,11 @@ controls.enableDamping = true;
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5)
-pointLight.position.x = 2
-pointLight.position.y = 3
-pointLight.position.z = 4
-scene.add(pointLight)
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
+pointLight.position.x = 2;
+pointLight.position.y = 3;
+pointLight.position.z = 4;
+scene.add(pointLight);
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
@@ -114,19 +123,7 @@ renderer?.setSize(sizes.width, sizes.height);
 
 //Animate
 
-const clock = new THREE.Clock();
-
 const Tick = () => {
-    const elapsedTime = clock.getElapsedTime();
-
-    sphere.rotation.y = 0.1 * elapsedTime;
-    plane.rotation.y = 0.1 * elapsedTime;
-    torus.rotation.y = 0.1 * elapsedTime;
-
-    sphere.rotation.x = 0.15 * elapsedTime;
-    plane.rotation.x = 0.15 * elapsedTime;
-    torus.rotation.x = 0.15 * elapsedTime;
-
 	renderer.render(scene, camera);
 	controls.update();
 	window.requestAnimationFrame(Tick);
@@ -168,14 +165,3 @@ window.addEventListener("dblclick", () => {
 		}
 	}
 });
-
-/**
- * Debug
- */
-const gui = new dat.GUI({ closed: true });
-gui.hide();
-
-const materialGui = gui.addFolder('Material');
-
-materialGui.add(material, 'metalness').min(0).max(1).step(0.0001)
-materialGui.add(material, 'roughness').min(0).max(1).step(0.0001)
