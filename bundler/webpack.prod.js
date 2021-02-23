@@ -6,7 +6,7 @@ module.exports = merge(
     commonConfiguration,
     {
         output: {
-            publicPath: 'love-donuts/',
+            publicPath: '/',
         },
 
         mode: 'production',
