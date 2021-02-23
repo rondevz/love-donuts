@@ -5,6 +5,10 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 module.exports = merge(
     commonConfiguration,
     {
+        output: {
+            publicPath: 'love-donuts/',
+        },
+
         mode: 'production',
         plugins:
         [
